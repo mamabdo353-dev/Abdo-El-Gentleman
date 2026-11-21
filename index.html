@@ -1,1 +1,129 @@
 
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>عبده الجنتل - PS4 GoldHEN Host</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-image: url('photo.png');
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      color: #ffffff;
+      text-align: center;
+      padding: 25px 15px 40px;
+    }
+    .glass-card {
+      background: rgba(10, 12, 18, 0.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 25px 22px;
+      border-radius: 22px;
+      width: 100%;
+      max-width: 460px;
+      border: 1.5px solid rgba(255, 215, 0, 0.65);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.85), 0 0 20px rgba(255, 215, 0, 0.25);
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255, 215, 0, 0.15);
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      padding: 4px 14px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      background: linear-gradient(90deg, #ffd700, #fff3a1, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(255, 215, 0, 0.2);
+    }
+    .fw-info {
+      font-size: 14px;
+      color: #cccccc;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover, .btn:focus {
+      transform: scale(1.03);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      color: #000000;
+      box-shadow: 0 4px 15px rgba(253, 160, 133, 0.45);
+    }
+    .btn-dark {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .footer {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #999999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glass-card">
+    <div class="badge">PS4 GoldHEN VIP Host (12.00 - 14.02)</div>
+    <h1>عبده الجنتل</h1>
+    <div class="fw-info" id="fwStatus">جاري فحص إصدار النظام...</div>
+
+    <a class="btn btn-gold" href="https://github.io">
+      ⚡ تفعيل GoldHEN الآن
+    </a>
+
+    <button class="btn btn-dark" onclick="alert('لإيقاف التحديثات نهائياً:\nالإعدادات > النظام > التنزيلات التلقائية > أزل علامة الصح من ملفات تحديث برمجيات النظام')">
+      🛡️ طريقة قفل تحديثات النظام
+    </button>
+
+    <div class="footer">تصميم وتطوير: عبده الجنتل © 2026</div>
+  </div>
+
+  <script>
+    var ua = navigator.userAgent;
+    var match = ua.match(/PlayStation 4\/([0-9.]+)/);
+    var statusEl = document.getElementById('fwStatus');
+    if (match && match[1]) {
+      statusEl.innerHTML = "تم اكتشاف جهاز PS4 بإصدار: <strong style='color:#00ffcc'>" + match[1] + "</strong>";
+    } else {
+      statusEl.innerHTML = "جاهز للعمل على متصفح PS4 (إصدار 12.00 - 14.02)";
+    }
+  </script>
+
+</body>
+</html>
