@@ -1,72 +1,46 @@
-#!/bin/sh
-# Serve this folder to the console.
-#
-#   ./serve.sh                     # port 8000
-#   AFTERGLOW_PORT=8080 ./serve.sh
-#
-# Two things this has to get right, and a plain `python3 -m http.server`
-# gets one of them wrong:
-#
-#   * revalidation on code. The console's browser holds on to modules, and a
-#     corrected file would otherwise never arrive. That matters most for the
-#     payloads: a cached .bin would keep running after you swapped it, and an
-#     unpatched ps4-hen freezes the console. Images are cached outright, since
-#     a stale picture harms nobody.
-#   * text/javascript for .js, so the ES modules load as modules, and
-#     text/cache-manifest for .appcache, or the offline cache never fills.
-#
-# Settings the pages remember (the payload choice, autostart) live in the
-# browser's localStorage and are unaffected by any of this.
-#
-# Nothing else. There is no command channel and no auto-run endpoint: the
-# pages are plain static files, and the run starts from a link on index.html.
+<!doctype html>
+<html class="landing" lang="en" manifest="cache.appcache">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>afterglow</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Every run starts from here. The referrer guard in jb.js arms the chain
+         only when it was reached from this page, so that a browser restoring
+         its last session cannot re-run it unattended. -->
+    <div id="brand"><b>afterglow</b></div>
 
-set -eu
+    <div class="shell">
+      <img class="meme" src="meme.png" alt="" />
 
-cd "$(dirname "$0")"
-PORT="${AFTERGLOW_PORT:-8000}"
+      <main class="panel">
+        <p class="lede">PS4 firmware 12.00 &ndash; 14.02</p>
 
-exec python3 - "$PORT" <<'PY'
-import sys
-from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+        <form class="pick" id="pick">
+          <label class="opt">
+            <input type="radio" name="payload" value="hen" />
+            <span>ps4-hen</span>
+          </label>
+          <label class="opt">
+            <input type="radio" name="payload" value="goldhen" checked />
+            <span>GoldHEN</span>
+          </label>
 
+          <label class="opt opt-auto">
+            <input type="checkbox" id="auto" checked />
+            <span>autostart</span>
+          </label>
 
-class Handler(SimpleHTTPRequestHandler):
-    extensions_map = {
-        **SimpleHTTPRequestHandler.extensions_map,
-        ".js": "text/javascript",
-        ".css": "text/css",
-        ".bin": "application/octet-stream",
-        # Without this the manifest arrives as a download and the browser
-        # ignores it, so the offline cache never fills.
-        ".appcache": "text/cache-manifest",
-    }
+          <button class="btn" type="submit">start</button>
+          <p class="count" id="count"></p>
+          <p class="count" id="cache" aria-live="polite"></p>
+        </form>
+      </main>
+    </div>
 
-    CACHEABLE = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico")
-
-    def end_headers(self):
-        p = self.path.split("?")[0].lower()
-        if p.endswith(self.CACHEABLE):
-            self.send_header("Cache-Control", "public, max-age=604800")
-        else:
-            # no-cache, not no-store: the file may be KEPT, but has to be
-            # revalidated before it is used. A corrected module or payload
-            # still arrives immediately, while an unchanged 500 KB payload
-            # costs a 304 instead of a full download -- and no-store would
-            # also keep the offline cache from holding it at all.
-            self.send_header("Cache-Control", "no-cache, must-revalidate")
-        super().end_headers()
-
-    def log_message(self, fmt, *args):
-        sys.stderr.write("%s %s\n" % (self.address_string(), fmt % args))
-
-
-port = int(sys.argv[1])
-server = ThreadingHTTPServer(("0.0.0.0", port), partial(Handler, directory="."))
-print("afterglow on http://0.0.0.0:%d/  (ctrl-c to stop)" % port, flush=True)
-try:
-    server.serve_forever()
-except KeyboardInterrupt:
-    pass
-PY
+    <p class="byline">by well0nez/m0zz</p>
+    <script src="launch.js"></script>
+  </body>
+</html>
