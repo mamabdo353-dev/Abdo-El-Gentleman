@@ -1,63 +1,72 @@
+#!/bin/sh
+# Serve this folder to the console.
+#
+#   ./serve.sh                     # port 8000
+#   AFTERGLOW_PORT=8080 ./serve.sh
+#
+# Two things this has to get right, and a plain `python3 -m http.server`
+# gets one of them wrong:
+#
+#   * revalidation on code. The console's browser holds on to modules, and a
+#     corrected file would otherwise never arrive. That matters most for the
+#     payloads: a cached .bin would keep running after you swapped it, and an
+#     unpatched ps4-hen freezes the console. Images are cached outright, since
+#     a stale picture harms nobody.
+#   * text/javascript for .js, so the ES modules load as modules, and
+#     text/cache-manifest for .appcache, or the offline cache never fills.
+#
+# Settings the pages remember (the payload choice, autostart) live in the
+# browser's localStorage and are unaffected by any of this.
+#
+# Nothing else. There is no command channel and no auto-run endpoint: the
+# pages are plain static files, and the run starts from a link on index.html.
 
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abdo El Gentleman</title>
-<style>
-* { box-sizing: border-box; }
+set -eu
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: url("photo.png") center center / cover no-repeat fixed;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
+cd "$(dirname "$0")"
+PORT="${AFTERGLOW_PORT:-8000}"
 
-.container {
-  width: 100%;
-  max-width: 430px;
-  padding: 25px;
-  margin-bottom: 15px;
-  text-align: center;
-  color: white;
-  background: rgba(0,0,0,.82);
-  border: 2px solid #ffd700;
-  border-radius: 22px;
-}
+exec python3 - "$PORT" <<'PY'
+import sys
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-h1 {
-  color: #ffd700;
-  font-size: 30px;
-}
 
-p { font-size: 16px; }
+class Handler(SimpleHTTPRequestHandler):
+    extensions_map = {
+        **SimpleHTTPRequestHandler.extensions_map,
+        ".js": "text/javascript",
+        ".css": "text/css",
+        ".bin": "application/octet-stream",
+        # Without this the manifest arrives as a download and the browser
+        # ignores it, so the offline cache never fills.
+        ".appcache": "text/cache-manifest",
+    }
 
-a {
-  display: block;
-  padding: 15px;
-  margin-top: 12px;
-  border-radius: 12px;
-  background: #ffd700;
-  color: #000;
-  font-size: 19px;
-  font-weight: bold;
-  text-decoration: none;
-}
-</style>
-</head>
-<body>
-<div class="container">
-  <h1>Abdo El Gentleman</h1>
-  <p>Welcome to my PS4 Browser</p>
-  <a href="https://well0nez.github.io/afterglow-web/index.html">
-    ⚡ فتح صفحة Afterglow
-  </a>
-</div>
-</body>
-</html>
+    CACHEABLE = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico")
+
+    def end_headers(self):
+        p = self.path.split("?")[0].lower()
+        if p.endswith(self.CACHEABLE):
+            self.send_header("Cache-Control", "public, max-age=604800")
+        else:
+            # no-cache, not no-store: the file may be KEPT, but has to be
+            # revalidated before it is used. A corrected module or payload
+            # still arrives immediately, while an unchanged 500 KB payload
+            # costs a 304 instead of a full download -- and no-store would
+            # also keep the offline cache from holding it at all.
+            self.send_header("Cache-Control", "no-cache, must-revalidate")
+        super().end_headers()
+
+    def log_message(self, fmt, *args):
+        sys.stderr.write("%s %s\n" % (self.address_string(), fmt % args))
+
+
+port = int(sys.argv[1])
+server = ThreadingHTTPServer(("0.0.0.0", port), partial(Handler, directory="."))
+print("afterglow on http://0.0.0.0:%d/  (ctrl-c to stop)" % port, flush=True)
+try:
+    server.serve_forever()
+except KeyboardInterrupt:
+    pass
+PY
